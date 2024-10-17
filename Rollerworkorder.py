@@ -35,8 +35,8 @@ def create_pdf(shades_data, total_yardage, customer):
             # Right Column - Outputs
             c.drawString(300, top_margin - 50, f"Tube Width: {shade['Output']['Tube Width']} inches")
             c.drawString(300, top_margin - 70, f"Bottom Bar Width: {shade['Output']['Bottom Bar Width']} inches")
-            c.drawString(300, top_margin - 90, f"Fabric Width: {shade['Output']['Fabric Width']} inches ({inches_to_cm(shade['Output']['Fabric Width'])} cm)")
-            c.drawString(300, top_margin - 110, f"Fabric Height: {shade['Output']['Fabric Height']} inches ({inches_to_cm(shade['Output']['Fabric Height'])} cm)")
+            c.drawString(300, top_margin - 90, f"Fabric Width: {shade['Output']['Fabric Width']} inches ({inches_to_mm(shade['Output']['Fabric Width'])} mm)")
+            c.drawString(300, top_margin - 110, f"Fabric Height: {shade['Output']['Fabric Height']} inches ({inches_to_mm(shade['Output']['Fabric Height'])} mm)")
             c.drawString(300, top_margin - 130, f"Cassette Width: {shade['Output']['Cassette Width']} inches")
             c.drawString(300, top_margin - 150, f"Mechanism Type: {shade['Output']['Mechanism Type']}")
             c.drawString(300, top_margin - 170, f"Yardage: {shade['Output']['Yardage']} yards")
@@ -54,6 +54,7 @@ def create_pdf(shades_data, total_yardage, customer):
 
     buffer.seek(0)
     return buffer
+
 
 # Function to convert fraction to decimal
 def fraction_to_decimal(fraction):
