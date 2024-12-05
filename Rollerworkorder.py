@@ -33,11 +33,11 @@ def create_pdf(shades_data, total_yardage, customer):
             c.drawString(50, top_margin - 230, f"Roll Width: {shade['Input']['Roll Width']} inches")
 
             # Right Column - Outputs
-            c.drawString(300, top_margin - 50, f"Tube Width: {shade['Output']['Tube Width']} inches")
-            c.drawString(300, top_margin - 70, f"Bottom Bar Width: {shade['Output']['Bottom Bar Width']} inches")
-            c.drawString(300, top_margin - 90, f"Fabric Width: {shade['Output']['Fabric Width']} inches ({inches_to_mm(shade['Output']['Fabric Width'])} mm)")
-            c.drawString(300, top_margin - 110, f"Fabric Height: {shade['Output']['Fabric Height']} inches ({inches_to_mm(shade['Output']['Fabric Height'])} mm)")
-            c.drawString(300, top_margin - 130, f"Cassette Width: {shade['Output']['Cassette Width']} inches")
+            c.drawString(300, top_margin - 50, f"Tube Width: {shade['Output']['Tube Width']}")
+            c.drawString(300, top_margin - 70, f"Bottom Bar Width: {shade['Output']['Bottom Bar Width']}")
+            c.drawString(300, top_margin - 90, f"Fabric Width: {shade['Output']['Fabric Width']}")
+            c.drawString(300, top_margin - 110, f"Fabric Height: {shade['Output']['Fabric Height']}")
+            c.drawString(300, top_margin - 130, f"Cassette Width: {shade['Output']['Cassette Width']}")
             c.drawString(300, top_margin - 150, f"Mechanism Type: {shade['Output']['Mechanism Type']}")
             c.drawString(300, top_margin - 170, f"Yardage: {shade['Output']['Yardage']} yards")
 
@@ -55,7 +55,6 @@ def create_pdf(shades_data, total_yardage, customer):
     buffer.seek(0)
     return buffer
 
-
 # Function to convert fraction to decimal
 def fraction_to_decimal(fraction):
     fractions = {
@@ -72,19 +71,26 @@ def fraction_to_decimal(fraction):
 
 # Function to perform calculations for each roller shade
 def calculate_shade(width, height, mount, cassette, mechanism, control_location, roll_orientation, roll_width):
-    fabric_width = width - 1.25  # Fabric Width Calculation
     if mount == "Outside Mount":
+        tube_width = width - 1.5
+        bottom_bar_width = width - 1.5
+        fabric_width = width - 1.5
+        cassette_width = width - 0.25 if cassette == "Yes" else "No"
         fabric_height = height + 16
-        cassette_width = width - 0.375 if cassette == "Yes" else "No"
     else:  # Inside Mount
+        tube_width = width - 1.75
+        bottom_bar_width = width - 1.75
+        fabric_width = width - 1.75
+        cassette_width = width - 0.5 if cassette == "Yes" else "No"
         fabric_height = height + 16
-        cassette_width = width - 0.625 if cassette == "Yes" else "No"
 
-    # Set Tube Width and Bottom Bar Width same as Fabric Width
-    tube_width = fabric_width
-    bottom_bar_width = fabric_width
+    # Convert to centimeters and prepare for display
+    tube_width_cm = inches_to_mm(tube_width)
+    bottom_bar_width_cm = inches_to_mm(bottom_bar_width)
+    fabric_width_cm = inches_to_mm(fabric_width)
+    cassette_width_cm = inches_to_mm(cassette_width) if cassette != "No" else "No"
 
-    # Mechanism logic with the new "Cordless" mechanism rules
+    # Mechanism logic
     if mechanism == "Cordless":
         if width > 20 and width < 90:
             mechanism_type = "Medium Cordless Spring + Handle"
@@ -107,26 +113,26 @@ def calculate_shade(width, height, mount, cassette, mechanism, control_location,
     yardage = round(yardage, 1)
 
     return {
-        "Tube Width": tube_width,
-        "Bottom Bar Width": bottom_bar_width,
-        "Fabric Width": fabric_width,
-        "Fabric Height": fabric_height,
-        "Cassette Width": cassette_width,
-        "Cassette": cassette,  # Display No if cassette is not selected
+        "Tube Width": f"{tube_width} inches ({tube_width_cm} mm)",
+        "Bottom Bar Width": f"{bottom_bar_width} inches ({bottom_bar_width_cm} mm)",
+        "Fabric Width": f"{fabric_width} inches ({fabric_width_cm} mm)",
+        "Fabric Height": f"{fabric_height} inches ({inches_to_mm(fabric_height)} mm)",
+        "Cassette Width": f"{cassette_width} inches ({cassette_width_cm} mm)" if cassette != "No" else "No",
+        "Cassette": cassette,
         "Mechanism Type": mechanism_type,
         "Yardage": yardage,
-        "Control Location": control_location,  # Include control location in output
-        "Roll Orientation": roll_orientation  # Include roll orientation in output
+        "Control Location": control_location,
+        "Roll Orientation": roll_orientation
     }
 
 # Initialize session state for roller shade data
 if 'shades' not in st.session_state:
     st.session_state['shades'] = []
 
-# Section 1: Select the number of roller shades and customer name
+# Section 1: Customer and shade inputs
 st.title("Roller Shade Production Work Order")
 customer = st.text_input("Customer", max_chars=40)
-num_shades = st.number_input("Select the number of Roller Shades", min_value=1, max_value=50, value=1)
+num_shades = st.number_input("Number of Roller Shades", min_value=1, max_value=50, value=1)
 
 # Section 2: Input variables for each roller shade
 for i in range(num_shades):
@@ -134,14 +140,14 @@ for i in range(num_shades):
     room = st.text_input(f"Room for Roller Shade #{i + 1}", max_chars=40)
     style_color = st.text_input(f"Style and Color for Roller Shade #{i + 1}", max_chars=40)
     mechanism = st.selectbox(f"Mechanism for Roller Shade #{i + 1}", [
-        "Cordless", "Motorized with remote", "Motorized with remote and hub", 
-        "Clutch left", "Clutch right", "Somfy Motorized With Remote", 
+        "Cordless", "Motorized with remote", "Motorized with remote and hub",
+        "Clutch left", "Clutch right", "Somfy Motorized With Remote",
         "Somfy Motorized With Remote And Hub", "Lutron Motorized"
     ])
     control_location = st.selectbox(f"Control Location for Roller Shade #{i + 1}", ["Left", "Right"])
     roll_orientation = st.selectbox(f"Roll Orientation for Roller Shade #{i + 1}", ["Regular", "Reverse"])
 
-    # Width and Height input with integer and fraction
+    # Width and Height inputs
     width_int = st.number_input(f"Roller Shade Width (inches) - Integer part for Roller Shade #{i + 1}", min_value=0, step=1, value=36)
     width_fraction = st.selectbox(f"Fraction for Roller Shade Width #{i + 1}", ['0"', '1/8"', '1/4"', '3/8"', '1/2"', '5/8"', '3/4"', '7/8"'])
     shade_width = width_int + fraction_to_decimal(width_fraction)
@@ -166,13 +172,13 @@ for i in range(num_shades):
                 "Mount": mount,
                 "Cassette": cassette,
                 "Roll Width": roll_width,
-                "Control Location": control_location,  # Include control location in input
-                "Roll Orientation": roll_orientation  # Include roll orientation in input
+                "Control Location": control_location,
+                "Roll Orientation": roll_orientation
             },
             "Output": output
         })
 
-# Section 3: Display the outputs for each roller shade
+# Section 3: Display outputs for each roller shade
 if st.session_state['shades']:
     st.subheader("Output Variables")
     total_yardage = 0
@@ -184,10 +190,10 @@ if st.session_state['shades']:
         st.write(f"Control Location: {shade['Input']['Control Location']}")
         st.write(f"Roll Orientation: {shade['Input']['Roll Orientation']}")
         st.write(f"Mechanism Type: {shade['Output']['Mechanism Type']}")
-        st.write(f"Tube Width: {shade['Output']['Tube Width']} inches")
-        st.write(f"Bottom Bar Width: {shade['Output']['Bottom Bar Width']} inches")
-        st.write(f"Fabric Width: {shade['Output']['Fabric Width']} inches ({inches_to_mm(shade['Output']['Fabric Width'])} mm)")
-        st.write(f"Fabric Height: {shade['Output']['Fabric Height']} inches ({inches_to_mm(shade['Output']['Fabric Height'])} mm)")
+        st.write(f"Tube Width: {shade['Output']['Tube Width']}")
+        st.write(f"Bottom Bar Width: {shade['Output']['Bottom Bar Width']}")
+        st.write(f"Fabric Width: {shade['Output']['Fabric Width']}")
+        st.write(f"Fabric Height: {shade['Output']['Fabric Height']}")
         st.write(f"Cassette: {shade['Output']['Cassette']}")
         st.write(f"Yardage: {shade['Output']['Yardage']}")
         total_yardage += shade['Output']['Yardage']
